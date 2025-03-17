@@ -54,9 +54,10 @@ subject to  the initial conditions
 
 $$
 \begin{cases}
-		S(x, 0)=S_0(x), & I(x, 0)=I_0(x)\\
+		S(x, 0)=S_0(x), & I(x, 0)=I_0(x)
 \end{cases}
 $$
+
 and Neumann boundary conditions
 
 $$
@@ -71,6 +72,7 @@ $$
 ![master_figure-2](Figures/SIR_Direct_Problem_Prediction.png)
 
 ### SEIR
+In this inverse problem, we employ the SEIR model from the second forward problem, where the parameters of the model $\alpha, \beta, \sigma$ and the dynamics are unknown. Only a small and scattered set of observable data with potential noises are provided for the hidden states $S(x,t), E(x,t), I(x,t), R(x,t)$. Unlike the first inverse problem case, we introduce an inversion for an additional parameter $\sigma$, which implies that we have less knowledge about the governing laws of the disease information presented by the model. Let 
 
 $$
 \begin{align*}
