@@ -38,6 +38,9 @@ pip install -e .
 ## Experiments
 
 ### SIR
+
+Let $x\in [0,L]$, the density distribution of the unknown compartments $S(x,t)$ and $I(x,t)$ in the spatiotemporal domain satisfies the partial differential equation system
+
 $$
 \begin{cases}
 	\frac{\partial S}{\partial t}-d_1 \frac{\partial^2 S}{\partial x^2}=B-\beta S I-\mu S, & x\in [0,L], \quad t>0 \\
@@ -47,14 +50,35 @@ $$
 \end{cases}
 $$
 
+subject to  the initial conditions
+
+\begin{array}{ll}
+		S(x, 0)=S_0(x), & I(x, 0)=I_0(x)\\
+\end{array}
+
+and Neumann boundary conditions
+
+\begin{array}{ll}
+		\frac{\partial S}{\partial x}(0, t)=g^{(1)}_1(t), & 
+		\frac{\partial I}{\partial x}(0, t)=g^{(2)}_1(t),\\
+		\frac{\partial S}{\partial x}(L, t)=g^{(1)}_2(t), & 
+		\frac{\partial I}{\partial x}(L, t)=g^{(2)}_2(t).
+\end{array}
+
+![master_figure-2](Figures/SIR_Direct_Problem_Prediction.png)
 
 ### SEIR
 
+\begin{align*}
+	&f(t,x):=\frac{\partial S(x, t)}{\partial t} - d_1 \frac{\partial^2 S}{\partial x^2} - B+\lambda_1 S(x, t) I(x, t)+\mu S(x, t),\\
+	&g(t,x):=\frac{\partial E(x, t)}{\partial t} - d_2 \frac{\partial^2 E}{\partial x^2} - \lambda_1 S(x, t) I(x, t) + (\mu + \lambda_2) E(x, t),\\
+	&h(t,x):=\frac{\partial I(x, t)}{\partial t} - d_3 \frac{\partial^2 I}{\partial x^2} - \lambda_2 E(x, t) + (\lambda_3 + \mu) I(x, t).
+\end{align*}
 
 
+![master_figure-2](Figures/SEIR_Inverse_Problem_Prediction.png)
 
-
-
+![master_figure-2](Figures/SEIR_Inverse_Problem_Parameter_inversion.png)
 
 
 
