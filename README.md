@@ -50,13 +50,8 @@ $$
 \end{cases}
 $$
 
-subject to  the initial conditions
+subject to  the initial conditions $S(x, 0)=S_0(x), & I(x, 0)=I_0(x)$
 
-$$
-\begin{array}
-		S(x, 0)=S_0(x), & I(x, 0)=I_0(x)\\
-\end{array}
-$$
 and Neumann boundary conditions
 
 $$
