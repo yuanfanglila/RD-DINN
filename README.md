@@ -50,17 +50,22 @@ $$
 \end{cases}
 $$
 
-subject to  the initial conditions $S(x, 0)=S_0(x), & I(x, 0)=I_0(x)$
+subject to  the initial conditions
 
+$$
+\begin{cases}
+		S(x, 0)=S_0(x), & I(x, 0)=I_0(x)\\
+\end{cases}
+$$
 and Neumann boundary conditions
 
 $$
-\begin{array}
+\begin{cases}
 		\frac{\partial S}{\partial x}(0, t)=g^{(1)}_1(t), & 
 		\frac{\partial I}{\partial x}(0, t)=g^{(2)}_1(t),\\
 		\frac{\partial S}{\partial x}(L, t)=g^{(1)}_2(t), & 
 		\frac{\partial I}{\partial x}(L, t)=g^{(2)}_2(t).
-\end{array}
+\end{cases}
 $$
 
 ![master_figure-2](Figures/SIR_Direct_Problem_Prediction.png)
