@@ -53,14 +53,14 @@ $$
 subject to  the initial conditions
 
 $$
-\begin{array}{ll}
+\begin{array}
 		S(x, 0)=S_0(x), & I(x, 0)=I_0(x)\\
 \end{array}
 $$
 and Neumann boundary conditions
 
 $$
-\begin{array}{ll}
+\begin{array}
 		\frac{\partial S}{\partial x}(0, t)=g^{(1)}_1(t), & 
 		\frac{\partial I}{\partial x}(0, t)=g^{(2)}_1(t),\\
 		\frac{\partial S}{\partial x}(L, t)=g^{(1)}_2(t), & 
