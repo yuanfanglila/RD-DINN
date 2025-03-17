@@ -53,20 +53,20 @@ $$
 subject to  the initial conditions
 
 $$
-\begin{cases}
+\begin{align}
 		S(x, 0)=S_0(x), & I(x, 0)=I_0(x)
-\end{cases}
+\end{align}
 $$
 
 and Neumann boundary conditions
 
 $$
-\begin{cases}
+\begin{align}
 		\frac{\partial S}{\partial x}(0, t)=g^{(1)}_1(t), & 
 		\frac{\partial I}{\partial x}(0, t)=g^{(2)}_1(t),\\
 		\frac{\partial S}{\partial x}(L, t)=g^{(1)}_2(t), & 
 		\frac{\partial I}{\partial x}(L, t)=g^{(2)}_2(t).
-\end{cases}
+\end{align}
 $$
 
 ![master_figure-2](Figures/SIR_Direct_Problem_Prediction.png)
