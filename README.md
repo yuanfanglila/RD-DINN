@@ -1,13 +1,6 @@
 # RD-DINN
-Physical information neural network for solving infectious disease problems with diffusion term
+Physical information neural network for solving infectious disease problems with diffusion term.
 
-
-<style>
-img {
-    width: 900px;
-    height: auto; /* 保持比例 */
-}
-</style>
 ![master_figure-2](Figures/RD_DINN_Architecture.png)
 
 
