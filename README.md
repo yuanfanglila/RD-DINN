@@ -86,6 +86,12 @@ $$
 
 ![master_figure-2](Figures/SEIR_Inverse_Problem_Parameter_inversion.png)
 
+## Acknowledgement
+
+We appreciate the following github repos for their valuable codebase:
+
+- PINNs: https://github.com/maziarraissi/PINNs
+
 
 
 
