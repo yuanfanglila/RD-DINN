@@ -5,23 +5,15 @@ import matplotlib.pyplot as plt
 import torch.optim as optim
 import torch
 import scipy.io
+import matplotlib
 from scipy.interpolate import griddata
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-import matplotlib.gridspec as gridspec
 from scipy.io import loadmat
 from collections import OrderedDict
 from pyDOE import lhs
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 np.random.seed(1234)
 torch.manual_seed(1234)
-print(device)
-#%%
-def savefig(filename, crop = True):
-    if crop == True:
-        plt.savefig('{}.pdf'.format(filename), bbox_inches='tight', pad_inches=0.02)
-    else:
-        plt.savefig('{}.pdf'.format(filename))
-#%%
+
 class PhysicsInformedNN(nn.Module):
     def __init__(self, X_IC, X_BC, S_IC, E_IC, I_IC, X_f, layers):
         super(PhysicsInformedNN, self).__init__()
@@ -38,7 +30,6 @@ class PhysicsInformedNN(nn.Module):
         self.null = torch.zeros((self.x_f.shape[0], 1), dtype=torch.float32, requires_grad=True).to(device)
         self.zero = torch.zeros((self.x_bc.shape[0], 1), dtype=torch.float32, requires_grad=True).to(device)
 
-        # 神经网络
         self.layers = layers
         self.DINN = self.DNN(layers).to(device)
         self.params = list(self.DINN.parameters())
@@ -76,8 +67,6 @@ class PhysicsInformedNN(nn.Module):
 
     def net_SEIRD_x(self, x, t):
         S, E, I = self.net_SEIRD(x, t)
-        print(f"psi_p shape: {S.shape}, requires_grad: {S.stop_gradient}")
-        print(f"y shape: {x.shape}, requires_grad: {x.stop_gradient}")
         S_x = torch.autograd.grad(S, x, grad_outputs=torch.ones_like(S), create_graph=True)[0]
         E_x = torch.autograd.grad(E, x, grad_outputs=torch.ones_like(E), create_graph=True)[0]
         I_x = torch.autograd.grad(I, x, grad_outputs=torch.ones_like(I), create_graph=True)[0]
@@ -127,7 +116,6 @@ class PhysicsInformedNN(nn.Module):
             self.optimizer.step()
             self.scheduler.step()
 
-            # 附加损失值（我们调用 "loss.item()"，因为我们只想要损失值，而不是整个计算图）
             self.losses.append(loss.item())
             self.loss_IC.append(loss_IC.item())
             self.loss_BC.append(loss_BC.item())
@@ -151,10 +139,10 @@ class PhysicsInformedNN(nn.Module):
         E = E.detach().cpu().numpy()
         I = I.detach().cpu().numpy()
         return S, E, I
-#%%
+
 N_u = 50
 N_f = 10000
-data = loadmat('D:\代码\python\扩散SIR\潜伏SEIR\SEIR方程解.mat')
+data = loadmat('../data/SEIR_alpha_1.0.mat')
 t = data['t'].flatten()[:, None]
 x = data['x'].flatten()[:, None]
 S_Exact = np.real(data['u1'])
@@ -169,43 +157,42 @@ I_star = I_Exact.flatten()[:, None]
 lb = X_star.min(0)
 ub = X_star.max(0)
 
-xx1 = np.hstack((X[0:1, :].T, T[0:1, :].T))  #初值网格点 xx1=（256,2）
-II1 = I_Exact[0:1, :].T  #S和I的初值
+xx1 = np.hstack((X[0:1, :].T, T[0:1, :].T))
+II1 = I_Exact[0:1, :].T
 SS1 = S_Exact[0:1, :].T
 EE1 = E_Exact[0:1, :].T
 
-xx2 = np.hstack((X[:, 0:1], T[:, 0:1]))      #左边界x=0的所有网格点 xx2=（100,2）
+xx2 = np.hstack((X[:, 0:1], T[:, 0:1]))
 II2 = I_Exact[:, 0:1]
 SS2 = S_Exact[:, 0:1]
 EE2 = E_Exact[:, 0:1]
-xx3 = np.hstack((X[:, -1:], T[:, -1:]))      #右边界x=1的所有网格点 xx3=（100,2）
+xx3 = np.hstack((X[:, -1:], T[:, -1:]))
 II3 = I_Exact[:, -1:]
 SS3 = S_Exact[:, -1:]
 EE3 = E_Exact[:, -1:]
 
-X_SI_ic_train = xx1   #所有初始值训练点
-X_SI_bc_train = np.vstack([xx2, xx3])  #所有边界训练点=左边界+右边界
-X_f_train = lb + (ub-lb)*lhs(2, N_f)     #内置训练点的选取，拉丁超立方体抽样
+X_SI_ic_train = xx1
+X_SI_bc_train = np.vstack([xx2, xx3])
+X_f_train = lb + (ub-lb)*lhs(2, N_f)
 X_f_train = np.vstack((X_f_train, X_SI_bc_train, X_SI_ic_train))
-S_ic_train = SS1  #精确初值解S,I
+S_ic_train = SS1
 I_ic_train = II1
 E_ic_train = EE1
 
-idx1 = np.random.choice(X_SI_ic_train.shape[0], N_u, replace=False)   # 随机抽一些点，当做数据点
-idx2 = np.random.choice(X_SI_bc_train.shape[0], N_u, replace=False)   # 随机抽一些点，当做数据点
+idx1 = np.random.choice(X_SI_ic_train.shape[0], N_u, replace=False)
+idx2 = np.random.choice(X_SI_bc_train.shape[0], N_u, replace=False)
 X_SI_ic_train = X_SI_ic_train[idx1, :]
 X_SI_bc_train = X_SI_bc_train[idx2, :]
 S_ic_train = S_ic_train[idx1, :]
 E_ic_train = E_ic_train[idx1, :]
 I_ic_train = I_ic_train[idx1, :]
-#%%
+
 layers = [2, 80, 80, 80, 80, 80, 3]
 dinn = PhysicsInformedNN(X_SI_ic_train, X_SI_bc_train, S_ic_train, E_ic_train, I_ic_train, X_f_train, layers)
 
 learning_rate = 1e-6
 optimizer = optim.Adam(dinn.params, lr=learning_rate)
 dinn.optimizer = optimizer
-#循环学习率,设置学习率的调节方法
 scheduler = torch.optim.lr_scheduler.CyclicLR(dinn.optimizer,
                                               base_lr=1e-5,
                                               max_lr=1e-3,
@@ -214,21 +201,19 @@ scheduler = torch.optim.lr_scheduler.CyclicLR(dinn.optimizer,
                                               gamma=0.85,
                                               cycle_momentum=False)
 dinn.scheduler = scheduler
-dinn.train(100) # train
-#%%
+dinn.train(20000)
+
 S_pred, E_pred, I_pred = dinn.predict(X_star)
 error_S = np.linalg.norm(S_star-S_pred,2)/np.linalg.norm(S_star,2)
 error_I = np.linalg.norm(I_star-I_pred,2)/np.linalg.norm(I_star,2)
 print('Error S: %e' % (error_S))
 print('Error I: %e' % (error_I))
-# %%
-from matplotlib.ticker import ScalarFormatter
-import pandas as pd
+
 fig = plt.figure(figsize=(11, 6))
 left, bottom, width, height = 0.12, 0.13, 0.8, 0.8
 ax1 = fig.add_axes([left, bottom, width, height])
 j = 10000
-average_loss_total = [np.mean(dinn.losses[i:i+j]) for i in range(0, len(dinn.losses), j)]    ##(50,)
+average_loss_total = [np.mean(dinn.losses[i:i+j]) for i in range(0, len(dinn.losses), j)]
 average_loss_IC = [np.mean(dinn.loss_IC[i:i+j]) for i in range(0, len(dinn.loss_IC), j)]
 average_loss_BC = [np.mean(dinn.loss_BC[i:i+j]) for i in range(0, len(dinn.loss_BC), j)]
 average_loss_F = [np.mean(dinn.loss_F[i:i+j]) for i in range(0, len(dinn.loss_F), j)]
@@ -242,16 +227,13 @@ plt.yscale('log')
 ax1.set_xlabel('Epoch', fontdict={'fontsize': 20, 'fontfamily':'serif'})
 ax1.set_ylabel('Relative $L^2$ Error', fontdict={'fontsize': 20, 'fontfamily':'serif'})
 
-# 自定义 x 轴刻度和标签
-custom_ticks = [0,2,4,6,8,10,12,14]  # 自定义刻度位置
-custom_labels = ['0', '1', '2', '3', '4', '5', '6', '7']  # 自定义刻度标签
+custom_ticks = [0,2,4,6,8,10,12,14]
+custom_labels = ['0', '1', '2', '3', '4', '5', '6', '7']
 ax1.set_xticks(custom_ticks)
 ax1.set_xticklabels(custom_labels)
 plt.legend()
 plt.show()
 
-
-#%%
 i_pred = griddata(X_star, I_pred.flatten(), (X, T), method='cubic')
 e_pred = griddata(X_star, E_pred.flatten(), (X, T), method='cubic')
 s_pred = griddata(X_star, S_pred.flatten(), (X, T), method='cubic')
@@ -259,8 +241,7 @@ ErrorS = np.abs(S_Exact - s_pred)
 ErrorI = np.abs(I_Exact - i_pred)
 ErrorE = np.abs(E_Exact - e_pred)
 print(ErrorS,ErrorE,ErrorI)
-# %%
-import matplotlib
+
 matplotlib.rcParams.update({'font.size': 25})
 fig, axes = plt.subplots(3, 3, figsize=(28, 25))
 Exact = [S_Exact, E_Exact, I_Exact]
@@ -284,14 +265,14 @@ for i in range(3):
                 X_SI_bc_train[:, 1],
                 X_SI_bc_train[:, 0],
                 'kx',
-                markersize=7,  # marker size doubled
+                markersize=7,
                 clip_on=False,
                 alpha=1.0)
             ax.plot(
                 X_SI_ic_train[:, 1],
                 X_SI_ic_train[:, 0],
                 'kx',
-                markersize=7,  # marker size doubled
+                markersize=7,
                 clip_on=False,
                 alpha=1.0
             )
@@ -325,10 +306,8 @@ for i in range(3):
                 ax.set_ylabel(r'$x$')
                 ax.set_title('Absolute Error')
 plt.tight_layout()
-# savefig('D:\代码\python\扩散SIR\潜伏SEIR\SIER正问题\SEIR正问题精确预测解')
 plt.show()
 
-#%%
 fig_1 = plt.figure(1, figsize=(19, 15))
 plt.subplot(3, 3, 1)
 plt.plot(t, S_Exact[:, 25], "b-", linewidth=4, label="Exact")
@@ -378,20 +357,12 @@ plt.plot(t, I_Exact[:, 75], "b-", linewidth=4, label="Exact")
 plt.plot(t, i_pred[:, 75], "r--", linewidth=4, label="Prediction")
 plt.xlabel('$t$', fontdict={'fontsize': 30, 'fontfamily':'serif'})
 
-
-
-
-
 plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.25),
            fancybox=True, shadow=True, ncol=4, fontsize=20)
-
 
 plt.tight_layout()
 plt.show()
 
-
-#%%
-import matplotlib
 matplotlib.rcParams['font.size'] = 15
 
 fig_1 = plt.figure(1, figsize=(18, 5))
@@ -413,14 +384,14 @@ plt.plot(
     X_SI_bc_train[:, 1],
     X_SI_bc_train[:, 0],
     'kx',
-    markersize=7,  # marker size doubled
+    markersize=7,
     clip_on=False,
     alpha=1.0)
 plt.plot(
     X_SI_ic_train[:, 1],
     X_SI_ic_train[:, 0],
     'kx',
-    markersize=7,  # marker size doubled
+    markersize=7,
     clip_on=False,
     alpha=1.0
 )
@@ -428,7 +399,6 @@ plt.colorbar()
 plt.xlabel(r'$t$', fontdict={'fontsize': 20, 'fontfamily':'serif'})
 plt.ylabel(r'$x$', fontdict={'fontsize': 20, 'fontfamily':'serif'})
 plt.title('Predicted', fontdict={'fontsize': 30,  'fontfamily':'serif'})
-
 
 plt.subplot(1, 3, 3)
 norm = matplotlib.colors.Normalize(vmin=0.00, vmax=0.035)
@@ -438,11 +408,9 @@ plt.xlabel(r'$t$', fontdict={'fontsize': 20, 'fontfamily':'serif'})
 plt.ylabel(r'$x$', fontdict={'fontsize': 20, 'fontfamily':'serif'})
 plt.title('Absolute Error', fontdict={'fontsize': 30, 'fontfamily':'serif'})
 
-
 plt.tight_layout()
 plt.show()
 
-#%%
 fig_2 = plt.figure(1, figsize=(18, 5))
 plt.subplot(1, 3, 1)
 plt.pcolor(T, X, E_Exact, cmap='jet')
@@ -485,11 +453,9 @@ plt.xlabel(r'$t$', fontdict={'fontsize': 20, 'fontfamily':'serif'})
 plt.ylabel(r'$x$', fontdict={'fontsize': 20, 'fontfamily':'serif'})
 plt.title('Absolute Error', fontdict={'fontsize': 30, 'fontfamily':'serif'})
 
-
 plt.tight_layout()
 plt.show()
 
-#%%
 fig_3 = plt.figure(1, figsize=(18, 5))
 plt.subplot(1, 3, 1)
 plt.pcolor(T, X, I_Exact, cmap='jet')
@@ -523,7 +489,6 @@ plt.xlabel(r'$t$', fontdict={'fontsize': 20, 'fontfamily':'serif'})
 plt.ylabel(r'$x$', fontdict={'fontsize': 20, 'fontfamily':'serif'})
 plt.title('Predicted', fontdict={'fontsize': 30,  'fontfamily':'serif'})
 
-
 plt.subplot(1, 3, 3)
 norm = matplotlib.colors.Normalize(vmin=0.00, vmax=0.025)
 plt.pcolor(T, X, np.abs(I_Exact - i_pred), cmap='jet', norm=norm)
@@ -531,7 +496,6 @@ plt.colorbar(format='%.0e')
 plt.xlabel(r'$t$', fontdict={'fontsize': 20, 'fontfamily':'serif'})
 plt.ylabel(r'$x$', fontdict={'fontsize': 20, 'fontfamily':'serif'})
 plt.title('Absolute Error', fontdict={'fontsize': 30, 'fontfamily':'serif'})
-
 
 plt.tight_layout()
 plt.show()
