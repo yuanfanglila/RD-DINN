@@ -1,12 +1,9 @@
 import numpy as np
 import torch
 from collections import OrderedDict
-import matplotlib
 import matplotlib.pyplot as plt
 import torch.nn as nn
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
-
 
 class DNN(nn.Module):
     def __init__(self, layers):
@@ -96,7 +93,7 @@ class Inverse_problem:
         alpha = torch.exp(self.alpha)
         S_xx = torch.autograd.grad(S_x, x, grad_outputs=torch.ones_like(S_x), create_graph=True)[0]
         S_t = torch.autograd.grad(S, t, grad_outputs=torch.ones_like(S), create_graph=True)[0]
-        pde1 = S_t - 0.001 * S_xx + beta * S * I - 0.1 + 0.1 * S    ##- alpha * I
+        pde1 = S_t - 0.001 * S_xx + beta * S * I - 0.1 + 0.1 * S
 
         I_xx = torch.autograd.grad(I_x, x, grad_outputs=torch.ones_like(I_x), create_graph=True)[0]
         I_t = torch.autograd.grad(I, t, grad_outputs=torch.ones_like(I), create_graph=True)[0]
@@ -175,7 +172,6 @@ class Inverse_problem:
         S = S.detach().cpu().numpy()
         I = I.detach().cpu().numpy()
         return S, I
-
 
 def savefig(filename, crop = True):
     if crop == True:

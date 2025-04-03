@@ -1,10 +1,8 @@
 import numpy as np
 from scipy.interpolate import griddata
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from PhysicsInformedNN1 import Inverse_problem, savefig
+from PhysicsInformedNN1 import Inverse_problem
 import torch
 import matplotlib
-import matplotlib.gridspec as gridspec
 from scipy.io import loadmat
 import os
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
@@ -13,13 +11,12 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 if __name__ == '__main__':
     N_u = 1000
-    data = loadmat('../Global （beta=0.5）.mat')
+    data = loadmat('../data/SIR_beta=0.5_alpha=0.7.mat')
 
     t = data['t'].flatten()[:, None]
     x = data['x'].flatten()[:, None]
     I_Exact = np.real(data['u2'])
     S_Exact = np.real(data['u1'])
-
 
     X, T = np.meshgrid(x, t)
     X_star = np.hstack((X.flatten()[:,None], T.flatten()[:,None]))
@@ -29,18 +26,17 @@ if __name__ == '__main__':
     lb = X_star.min(0)
     ub = X_star.max(0)
 
-    noise = 0.0 
+    noise = 0.0
     idx = np.random.choice(X_star.shape[0], N_u, replace=False)
     X_u_train = X_star[idx, :]
     S_train = S_star[idx, :]
     I_train = I_star[idx, :]
-    #%%
+
     layers = [2, 100, 100, 100, 100, 100, 100, 100, 2]
     dinn = Inverse_problem(X_u_train, S_train, I_train, lb, ub, layers)
     iters = 500
     dinn.train(iters)
 
-    #%%
     S_pred, I_pred = dinn.predict(X_star)
     error_S = np.linalg.norm(S_star-S_pred,2)/np.linalg.norm(S_star,2)
     error_I = np.linalg.norm(I_star-I_pred,2)/np.linalg.norm(I_star,2)
@@ -54,16 +50,10 @@ if __name__ == '__main__':
     print('Error I: %e' % (error_I))
     print('Error beta: %.3f%%' % (error_beta))
     print('Error alpha: %.3f%%' % (error_alpha))
-    #%%
-    def savefig(filename, crop=True):
-        if crop == True:
-            plt.savefig('{}.pdf'.format(filename), bbox_inches='tight', pad_inches=0.02)
-        else:
-            plt.savefig('{}.pdf'.format(filename))
-    #%%
+
     i_pred = griddata(X_star, I_pred.flatten(), (X, T), method='cubic')
     s_pred = griddata(X_star, S_pred.flatten(), (X, T), method='cubic')
-    # %%
+
     matplotlib.rcParams['font.size'] = 15
     fig_1 = plt.figure(1, figsize=(18, 5))
     plt.subplot(1, 3, 1)
@@ -126,9 +116,10 @@ if __name__ == '__main__':
 #     left, bottom, width, height = 0.11, 0.11, 0.8, 0.8
 #     ax1 = fig.add_axes([left, bottom, width, height])
 #     j = 2000
-#     average_loss_total = [np.mean(dinn.losses[i:i + j]) for i in range(0, len(dinn.losses), j)]  
+#     average_loss_total = [np.mean(dinn.losses[i:i + j]) for i in range(0, len(dinn.losses), j)]  ##(50,)
 #     average_loss_D = [np.mean(dinn.loss_D[i:i + j]) for i in range(0, len(dinn.loss_D), j)]
 #     average_loss_F = [np.mean(dinn.loss_F[i:i + j]) for i in range(0, len(dinn.loss_F), j)]
+
 #     ax1.plot(average_loss_total, label='Total', color='teal')
 #     ax1.plot(average_loss_D, label='Data', color='red')
 #     ax1.plot(average_loss_F, label='Function', color='b')
@@ -137,8 +128,8 @@ if __name__ == '__main__':
 #     ax1.set_xlabel('Epoch', fontdict={'fontsize': 20, 'fontfamily': 'serif'})
 #     ax1.set_ylabel('Relative $L^2$ Error', fontdict={'fontsize': 20, 'fontfamily': 'serif'})
 #
-#     custom_ticks = [0, 5, 10, 15, 20, 25]  
-#     custom_labels = ['0', '1', '2', '3', '4', '5']  
+#     custom_ticks = [0, 5, 10, 15, 20, 25]
+#     custom_labels = ['0', '1', '2', '3', '4', '5']
 #     ax1.set_xticks(custom_ticks)
 #     ax1.set_xticklabels(custom_labels)
 #
@@ -198,6 +189,7 @@ if __name__ == '__main__':
 #     ax1.set_ylim()
 #     plt.legend()
 #     plt.show()
+
 #     #%%
 #     fig_6 = plt.figure(figsize=(18,6))
 #     plt.subplot(1, 2, 1)
@@ -212,7 +204,7 @@ if __name__ == '__main__':
 #     avg_iter = [np.mean(iter[i:i + interval]) for i in range(0, len(iter), interval)]
 #
 #     plt.plot(iter[:20000], beta_exact.T[:20000], "r--", label='beta_exact', linewidth=4, color='red')
-#     plt.plot(avg_iter[:20], avg_beta[:20], label='beta_pred', linewidth=3, color='b')  
+#     plt.plot(avg_iter[:20], avg_beta[:20], label='beta_pred', linewidth=3, color='b')
 #     plt.fill_between(avg_iter[:20], np.array(avg_beta[:20]) * (1.05), np.array(avg_beta[:20]) * (0.95), color='lightblue',
 #                      alpha=0.7, label='Error Band')
 #     plt.xlabel("Epoch", fontdict={'fontsize': 20, 'fontfamily': 'serif'})
@@ -223,7 +215,7 @@ if __name__ == '__main__':
 #
 #     plt.subplot(1, 2, 2)
 #     plt.plot(iter[:20000], alpha_exact.T[:20000], "r--", label='alpha_exact', linewidth=4, color='red')
-#     plt.plot(avg_iter[:20], avg_alpha[:20], label='alpha_pred', linewidth=3, color='b')  
+#     plt.plot(avg_iter[:20], avg_alpha[:20], label='alpha_pred', linewidth=3, color='b')
 #     plt.fill_between(avg_iter[:20], np.array(avg_alpha[:20]) * (1.05), np.array(avg_alpha[:20]) * (0.95), color='lightblue',
 #                      alpha=0.7, label='Error Band')
 #     plt.xlabel("Epoch", fontdict={'fontsize': 20, 'fontfamily': 'serif'})

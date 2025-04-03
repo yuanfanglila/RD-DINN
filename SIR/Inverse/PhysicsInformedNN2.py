@@ -1,11 +1,8 @@
 import numpy as np
 import torch
 from collections import OrderedDict
-import matplotlib
-import matplotlib.pyplot as plt
 import torch.nn as nn
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
 
 class DNN(nn.Module):
     def __init__(self, layers):
@@ -14,35 +11,22 @@ class DNN(nn.Module):
         self.activation = nn.Tanh
         layer_list = list()
 
-        # Define layers and activations
         for i in range(self.depth - 1):
             layer_list.append(('layer_%d' % i, torch.nn.Linear(layers[i], layers[i + 1])))
             layer_list.append(('activation_%d' % i, self.activation()))
 
-        # Output layer (without activation)
         layer_list.append(('layer_%d' % (self.depth - 1), torch.nn.Linear(layers[-2], layers[-1])))
 
-        # Create the sequential model
         layerdict = OrderedDict(layer_list)
         self.layers = torch.nn.Sequential(layerdict)
 
     def forward(self, x, t):
-        # Concatenate x and t
         x = torch.hstack((x, t))
-
-        # Save the input for residual connection
         residual = x
-
-        # Pass through the layers
         out = self.layers(x)
-
-        # Ensure the residual has the same shape as the output
         if out.size(1) != residual.size(1):
             residual = torch.nn.functional.pad(residual, (0, out.size(1) - residual.size(1)))
-
-        # Add the residual connection
         out += residual
-
         return out
 
 class Inverse_problem:
@@ -185,8 +169,3 @@ class Inverse_problem:
         I = I.detach().cpu().numpy()
         return S, I
 
-def savefig(filename, crop = True):
-    if crop == True:
-        plt.savefig('{}.pdf'.format(filename), bbox_inches='tight', pad_inches=0.02)
-    else:
-        plt.savefig('{}.pdf'.format(filename))
