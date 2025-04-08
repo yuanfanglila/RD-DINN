@@ -1,7 +1,3 @@
-# implementation of PINNsformer
-# paper: PINNsFormer: A Transformer-Based Framework For Physics-Informed Neural Networks
-# link: https://arxiv.org/abs/2307.11833
-
 import torch
 import torch.nn as nn
 import pdb
