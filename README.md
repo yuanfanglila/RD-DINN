@@ -1,4 +1,10 @@
 # Reaction Diffusion-Diease Informed Neural Network(RD-DINN)
+<bar>
+PyTorch implementation of
+
+**A deep learning framework for predicting the spread of diffusion diseases**
+(Links to paper: <a href="https://www.aimspress.com/article/doi/10.3934/era.2025110">AIMS Press</a>)
+
 Physical information neural network for solving infectious disease problems with diffusion term.
 
 ![master_figure-2](Figures/RD_DINN_Architecture.png)
